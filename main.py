@@ -27,6 +27,8 @@ def get_cur_id(db,model):
 
 @app.post("/api/submitData")
 def submitData(data=Body(), db: Session = Depends(get_db)):
+     if not db:
+         return json.dumps({"status": 500, "message": "db connect error", "id": 'null'})
      current_date = datetime.now()
      usid = get_cur_id(db,Users)
      user = Users(id = usid,
@@ -78,8 +80,10 @@ def submitData(data=Body(), db: Session = Depends(get_db)):
          # это будет не нужно
          imid += 1
          pimid += 1
-
-     db.commit()
+     try:
+        db.commit()
+     except:
+         return json.dumps({"status": 500, "message": "db commit error", "id": 'null'})
      return json.dumps({ "status": 200, "message": 'null', "id": pereval.id })
 
 
