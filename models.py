@@ -2,14 +2,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String,DateTime,BINARY,Float,ForeignKey
-
-from fastapi import FastAPI
+from enum import Enum
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
-class Base(DeclarativeBase): pass
+class StatusEnum(Enum):
+    NEW = 'новый'
+    PENDING = 'модератор взял в работу'
+    ACCEPTED = 'модерация прошла успешно'
+    REJECTED = 'информация не принята'
 
+class Base(DeclarativeBase): pass
 
 class Pereval_areas(Base):
     __tablename__ = "pereval_areas"
@@ -65,9 +70,13 @@ class Pereval_added(Base):
     level_summer = Column(String)
     level_autumn = Column(String)
     level_spring = Column(String)
-    user = Column(Integer, ForeignKey(Users.id))
-    choords = Column(Integer, ForeignKey(Choords.id))
-
+    user         = Column(Integer, ForeignKey(Users.id))
+    choords      = Column(Integer, ForeignKey(Choords.id))
+    status       = Column(PgEnum(StatusEnum,
+                                 name='status_enum',
+                                 create_type=False),
+                                 nullable=False,
+                                 default=StatusEnum.NEW)
 
 class Pereval_pereval_images(Base):
     __tablename__ = "pereval_pereval_images"
