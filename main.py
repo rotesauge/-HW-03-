@@ -25,6 +25,42 @@ def get_cur_id(db,model):
     else:
         return 1
 
+
+
+@app.get("/api/submitData/{item_id}")
+def submitDatа_g(item_id, db: Session = Depends(get_db)):
+    per = db.query(Pereval_added).filter(Pereval_added.id == item_id)
+    if per:
+        choords = db.query(Choords).filter(Choords.id == per.choords)
+        user = db.query(Users).filter(Users.id == per.user)
+        choords_struct = {"latitude": choords.latitude,
+                         "longitude": choords.longitude,
+                         "height"   : choords.height}
+        user_struct = {"email"      : user.email,
+                       "phone"      : user.phone,
+                       "fam"        : user.fam,
+                       "name"       : user.name,
+                       "otc"        : user.otc}
+        result = {"date_added"      : per.date_added,
+                  "beautyTitle"     : per.beautyTitle,
+                  "title"           : per.title,
+                  "other_titles"    : per.other_titles,
+                  "connect"         : per.connect,
+                  "level_winter"    : per.level_winter,
+                  "level_summer"    : per.level_summer,
+                  "level_autumn"    : per.level_autumn,
+                  "level_spring"    : per.level_spring,
+                  "status"          : per.status,
+                  "user"            : user_struct,
+                  "choords"         : choords_struct} #
+        return json.dumps({"status": 200, "message": result, "id": item_id})
+    else:
+        return json.dumps({"status": 500, "message": "item not exist", "id": item_id})
+
+@app.patch("/api/submitData/{item_id}")
+def submitDatа_p(item_id,data=Body()):
+    pass
+
 @app.post("/api/submitData")
 def submitData(data=Body(), db: Session = Depends(get_db)):
      if not db:
