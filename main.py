@@ -1,14 +1,54 @@
+from sqlalchemy.dialects.postgresql import array
+
 from models import *
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from fastapi import Depends, FastAPI, Body
 from datetime import datetime
+from pydantic import BaseModel
+from sqlalchemy.ext.declarative import DeclarativeMeta
 import json
 
 # создаем таблицы
 Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
+#
+#
+# class UserClass(BaseModel):
+#     email: str
+#     fam: str
+#     name: str
+#     otc: str | None = None
+#     phone: str | None = None
+#     name: str
+#     age: int | None = None
+#
+# class CoordsClass(BaseModel):
+#     latitude: float
+#     longitude: float
+#     height: int
+#
+# class LevelClass(BaseModel):
+#     winter: str | None = None
+#     summer: str | None = None
+#     autumn: str | None = None
+#     spring: str | None = None
+#
+# class ImgClass(BaseModel):
+#     data: str
+#     title: str
+#
+# class submitDatаClass(BaseModel):
+#     beauty_title: str
+#     title: str
+#     other_titles: str
+#     connect: str
+#     add_time: datetime
+#     other_titles: str
+#     user: UserClass
+#     coords: CoordsClass
+#     level: LevelClass
+#     images: array[ImgClass]
 
 
 # определяем зависимость
@@ -25,13 +65,107 @@ def get_cur_id(db,model):
     else:
         return 1
 
+
+
+
+class AlchemyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj.__class__, DeclarativeMeta):
+            # Convert SQLAlchemy model to dictionary
+            fields = {}
+            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata']:
+                data = obj.__getattribute__(field)
+                try:
+                    json.dumps(data)
+                    fields[field] = data
+                except TypeError:
+                    fields[field] = None
+            return fields
+        return json.JSONEncoder.default(self, obj)
+
+@app.get("api/submitData/")
+def submitDatа_gp(email, db: Session = Depends(get_db)):
+    qres = db.query(Pereval_added).filter(Pereval_added.user ==  db.query(Users).filter(Users.email == email).first())
+    return json.dumps({"status": 200, "message": json.dumps(qres, cls=AlchemyEncoder), "id": 'null'})
+
+@app.get("/api/submitData/{item_id}")
+def submitDatа_g(item_id, db: Session = Depends(get_db)):
+    per = db.query(Pereval_added).filter(Pereval_added.id == item_id)
+    if per:
+        choords = db.query(Choords).filter(Choords.id == per.choords)
+        user = db.query(Users).filter(Users.id == per.user)
+        choords_struct = {"latitude": choords.latitude,
+                         "longitude": choords.longitude,
+                         "height"   : choords.height}
+        user_struct = {"email"      : user.email,
+                       "phone"      : user.phone,
+                       "fam"        : user.fam,
+                       "name"       : user.name,
+                       "otc"        : user.otc}
+        result = {"date_added"      : per.date_added,
+                  "beautyTitle"     : per.beautyTitle,
+                  "title"           : per.title,
+                  "other_titles"    : per.other_titles,
+                  "connect"         : per.connect,
+                  "level_winter"    : per.level_winter,
+                  "level_summer"    : per.level_summer,
+                  "level_autumn"    : per.level_autumn,
+                  "level_spring"    : per.level_spring,
+                  "status"          : per.status,
+                  "user"            : user_struct,
+                  "choords"         : choords_struct} #
+        return json.dumps({"status": 200, "message": result, "id": item_id})
+    else:
+        return json.dumps({"status": 500, "message": "item not exist", "id": item_id})
+
+@app.patch("/api/submitData/{item_id}")
+def submitDatа_p(item_id,data=Body(), db: Session = Depends(get_db)):
+    if not db:
+        return json.dumps({"status": 500, "message": "db connect error", "id": 'null'})
+    current_date = datetime.now()
+
+    perevalforpatch = db.query(Pereval_added).filter(Pereval_added.id == item_id).first()
+    choordsforpatch = db.query(Choords).filter(Choords.id == perevalforpatch.choords).first()
+
+    perevalforpatch.update({'beautyTitle': data["beauty_title"],
+                            'title': data["title"],
+                            'other_titles': data["other_titles"],
+                            'connect': data["connect"],
+                            'level_winter': data["level"]["winter"],
+                            'level_summer': data["level"]["summer"],
+                            'level_autumn': data["level"]["autumn"],
+                            'level_spring': data["level"]["spring"]})
+
+    choordsforpatch.update({'latitude': data["coords"]["latitude"],
+                            'longitude': data["coords"]["longitude"],
+                            'height': data["coords"]["height"]})
+    imid = get_cur_id(db, Pereval_images)
+    pimid = get_cur_id(db, Pereval_pereval_images)
+    for img in data["images"]:
+        pereval_images = Pereval_images(id=imid,
+                                        title=img["title"],
+                                        date_added=current_date,
+                                        img=bytes(img["data"], encoding='utf8'))
+        db.add(pereval_images)
+        Ppimages = Pereval_pereval_images(id=pimid,
+                                          id_pereval=item_id,
+                                          id_image=imid)
+        db.add(Ppimages)
+        imid += 1
+        pimid += 1
+    try:
+        db.commit()
+    except:
+        return json.dumps({"status": 500, "message": "db commit error", "id": 'null'})
+    return json.dumps({"status": 200, "message": 'null', "id": item_id})
+
 @app.post("/api/submitData")
 def submitData(data=Body(), db: Session = Depends(get_db)):
      if not db:
          return json.dumps({"status": 500, "message": "db connect error", "id": 'null'})
      current_date = datetime.now()
      usid = get_cur_id(db,Users)
-     user = Users(id = usid,
+     user = Users(id    = usid,
                   email = data["user"]["email"],
                   phone = data["user"]["phone"],
                   fam   = data["user"]["fam"],
@@ -39,7 +173,7 @@ def submitData(data=Body(), db: Session = Depends(get_db)):
                   otc   = data["user"]["otc"])
      db.add(user)
      chid = get_cur_id(db,Choords)
-     choords = Choords(id = chid,
+     choords = Choords(id        = chid,
                        latitude  = data["coords"]["latitude"],
                        longitude = data["coords"]["longitude"],
                        height    = data["coords"]["height"])
