@@ -83,17 +83,27 @@ class AlchemyEncoder(json.JSONEncoder):
             return fields
         return json.JSONEncoder.default(self, obj)
 
-@app.get("api/submitData/")
+@app.get("/api/submitData")
 def submitDatа_gp(email, db: Session = Depends(get_db)):
-    qres = db.query(Pereval_added).filter(Pereval_added.user ==  db.query(Users).filter(Users.email == email).first())
-    return json.dumps({"status": 200, "message": json.dumps(qres, cls=AlchemyEncoder), "id": 'null'})
+    qres = db.query(Pereval_added).filter(Pereval_added.user ==  db.query(Users).filter(Users.email == email).first().id)
+    newlist = [{"date_added"      : str(item.date_added),
+                  "beautyTitle"     : item.beautyTitle,
+                  "title"           : item.title,
+                  "other_titles"    : item.other_titles,
+                  "connect"         : item.connect,
+                  "level_winter"    : item.level_winter,
+                  "level_summer"    : item.level_summer,
+                  "level_autumn"    : item.level_autumn,
+                  "level_spring"    : item.level_spring,
+                  "status"          : str(item.status)} for item in qres]
+    return json.dumps({"status": 200, "message": json.dumps(newlist), "id": 'null'})
 
 @app.get("/api/submitData/{item_id}")
 def submitDatа_g(item_id, db: Session = Depends(get_db)):
-    per = db.query(Pereval_added).filter(Pereval_added.id == item_id)
+    per = db.query(Pereval_added).filter(Pereval_added.id == item_id).first()
     if per:
-        choords = db.query(Choords).filter(Choords.id == per.choords)
-        user = db.query(Users).filter(Users.id == per.user)
+        choords = db.query(Choords).filter(Choords.id == per.choords).first()
+        user = db.query(Users).filter(Users.id == per.user).first()
         choords_struct = {"latitude": choords.latitude,
                          "longitude": choords.longitude,
                          "height"   : choords.height}
@@ -102,7 +112,7 @@ def submitDatа_g(item_id, db: Session = Depends(get_db)):
                        "fam"        : user.fam,
                        "name"       : user.name,
                        "otc"        : user.otc}
-        result = {"date_added"      : per.date_added,
+        result = {"date_added"      : str(per.date_added),
                   "beautyTitle"     : per.beautyTitle,
                   "title"           : per.title,
                   "other_titles"    : per.other_titles,
@@ -111,7 +121,7 @@ def submitDatа_g(item_id, db: Session = Depends(get_db)):
                   "level_summer"    : per.level_summer,
                   "level_autumn"    : per.level_autumn,
                   "level_spring"    : per.level_spring,
-                  "status"          : per.status,
+                  "status"          : str(per.status),
                   "user"            : user_struct,
                   "choords"         : choords_struct} #
         return json.dumps({"status": 200, "message": result, "id": item_id})
