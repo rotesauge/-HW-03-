@@ -65,9 +65,6 @@ def get_cur_id(db,model):
     else:
         return 1
 
-
-
-
 class AlchemyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj.__class__, DeclarativeMeta):
@@ -96,7 +93,7 @@ def submitDatа_gp(email, db: Session = Depends(get_db)):
                   "level_autumn"    : item.level_autumn,
                   "level_spring"    : item.level_spring,
                   "status"          : str(item.status)} for item in qres]
-    return json.dumps({"status": 200, "message": json.dumps(newlist), "id": 'null'})
+    return json.dumps({"status": 200, "message": newlist, "id": 'null'}, sort_keys=True)
 
 @app.get("/api/submitData/{item_id}")
 def submitDatа_g(item_id, db: Session = Depends(get_db)):
@@ -124,14 +121,14 @@ def submitDatа_g(item_id, db: Session = Depends(get_db)):
                   "status"          : str(per.status),
                   "user"            : user_struct,
                   "choords"         : choords_struct} #
-        return json.dumps({"status": 200, "message": result, "id": item_id})
+        return json.dumps({"status": 200, "message": result, "id": item_id}, sort_keys=True)
     else:
-        return json.dumps({"status": 500, "message": "item not exist", "id": item_id})
+        return json.dumps({"status": 500, "message": "item not exist", "id": item_id}, sort_keys=True)
 
 @app.patch("/api/submitData/{item_id}")
 def submitDatа_p(item_id,data=Body(), db: Session = Depends(get_db)):
     if not db:
-        return json.dumps({"status": 500, "message": "db connect error", "id": 'null'})
+        return json.dumps({"status": 500, "message": "db connect error", "id": 'null'}, sort_keys=True)
     current_date = datetime.now()
 
     perevalforpatch = db.query(Pereval_added).filter(Pereval_added.id == item_id).first()
@@ -166,8 +163,8 @@ def submitDatа_p(item_id,data=Body(), db: Session = Depends(get_db)):
     try:
         db.commit()
     except:
-        return json.dumps({"status": 500, "message": "db commit error", "id": 'null'})
-    return json.dumps({"status": 200, "message": 'null', "id": item_id})
+        return json.dumps({"status": 500, "state": 0, "id": item_id}, sort_keys=True)
+    return json.dumps({"status": 200, "state": 1, "id": item_id}, sort_keys=True)
 
 @app.post("/api/submitData")
 def submitData(data=Body(), db: Session = Depends(get_db)):
@@ -227,7 +224,42 @@ def submitData(data=Body(), db: Session = Depends(get_db)):
      try:
         db.commit()
      except:
-         return json.dumps({"status": 500, "message": "db commit error", "id": 'null'})
-     return json.dumps({ "status": 200, "message": 'null', "id": pereval.id })
+         return json.dumps({"status": 500, "message": "db commit error", "id": 'null'}, sort_keys=True)
+     return json.dumps({ "status": 200, "message": 'null', "id": pereval.id }, sort_keys=True)
 
 
+def test__submitData_post_return_dict():
+    ret = submitData({},None)
+    dict = json.loads(ret)
+    if dict.get("status"):
+        if dict.get("message"):
+            if dict.get("id"):
+                assert False
+    assert True
+
+def test__submitData_patch_return_dict():
+    ret = submitDatа_p(0,{})
+    dict = json.loads(ret)
+    if dict.get("status"):
+        if dict.get("state"):
+            if dict.get("id"):
+                assert False
+    assert True
+
+def test__submitData_get_return_dict():
+    ret = submitDatа_g({},None)
+    dict = json.loads(ret)
+    if dict.get("status"):
+        if dict.get("message"):
+            if dict.get("id"):
+                assert False
+    assert True
+
+def test__submitData_get_email_return_dict():
+    ret = submitDatа_gp({},None)
+    dict = json.loads(ret)
+    if dict.get("status"):
+        if dict.get("message"):
+            if dict.get("id"):
+                assert False
+    assert True
