@@ -8,6 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from sqlalchemy.ext.declarative import DeclarativeMeta
 import json
+from fastapi.responses import JSONResponse,FileResponse
 
 # создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -49,6 +50,17 @@ app = FastAPI()
 #     coords: CoordsClass
 #     level: LevelClass
 #     images: array[ImgClass]
+
+
+
+
+@app.get("/openapi/")
+async def main():
+    return FileResponse("sw.html")
+
+@app.get("/openapischema/")
+async def main():
+    return FileResponse("openapi-schema.yml")
 
 
 # определяем зависимость
@@ -93,7 +105,7 @@ def submitDatа_gp(email, db: Session = Depends(get_db)):
                   "level_autumn"    : item.level_autumn,
                   "level_spring"    : item.level_spring,
                   "status"          : str(item.status)} for item in qres]
-    return json.dumps({"status": 200, "message": newlist, "id": 'null'}, sort_keys=True)
+    return JSONResponse(content={"status": 200, "message": newlist, "id": 'null'})
 
 @app.get("/api/submitData/{item_id}")
 def submitDatа_g(item_id, db: Session = Depends(get_db)):
@@ -121,14 +133,14 @@ def submitDatа_g(item_id, db: Session = Depends(get_db)):
                   "status"          : str(per.status),
                   "user"            : user_struct,
                   "choords"         : choords_struct} #
-        return json.dumps({"status": 200, "message": result, "id": item_id}, sort_keys=True)
+        return JSONResponse(content={"status": 200, "message": result, "id": item_id})
     else:
-        return json.dumps({"status": 500, "message": "item not exist", "id": item_id}, sort_keys=True)
+        return JSONResponse(content={"status": 500, "message": "item not exist", "id": item_id})
 
 @app.patch("/api/submitData/{item_id}")
 def submitDatа_p(item_id,data=Body(), db: Session = Depends(get_db)):
     if not db:
-        return json.dumps({"status": 500, "message": "db connect error", "id": 'null'}, sort_keys=True)
+        return JSONResponse(content={"status": 500, "message": "db connect error", "id": 'null'})
     current_date = datetime.now()
 
     perevalforpatch = db.query(Pereval_added).filter(Pereval_added.id == item_id).first()
@@ -163,8 +175,8 @@ def submitDatа_p(item_id,data=Body(), db: Session = Depends(get_db)):
     try:
         db.commit()
     except:
-        return json.dumps({"status": 500, "state": 0, "id": item_id}, sort_keys=True)
-    return json.dumps({"status": 200, "state": 1, "id": item_id}, sort_keys=True)
+        return JSONResponse(content={"status": 500, "state": 0, "id": item_id})
+    return JSONResponse(content={"status": 200, "state": 1, "id": item_id})
 
 @app.post("/api/submitData")
 def submitData(data=Body(), db: Session = Depends(get_db)):
@@ -224,8 +236,8 @@ def submitData(data=Body(), db: Session = Depends(get_db)):
      try:
         db.commit()
      except:
-         return json.dumps({"status": 500, "message": "db commit error", "id": 'null'}, sort_keys=True)
-     return json.dumps({ "status": 200, "message": 'null', "id": pereval.id }, sort_keys=True)
+         return JSONResponse(content={"status": 500, "message": "db commit error", "id": 'null'})
+     return JSONResponse(content={ "status": 200, "message": 'null', "id": pereval.id })
 
 
 def test__submitData_post_return_dict():

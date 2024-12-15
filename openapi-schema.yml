@@ -1,0 +1,203 @@
+openapi: 3.0.2
+info:
+  title: 'perevals'
+  version: "0.1"
+paths:
+  /api/submitData/:
+    post:
+      operationId: createperevaldata
+      description: 'получение данных из мобильного приложениея и запись их в базу данных'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateData'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDataResp'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDataResp'
+          description: ''
+    get:
+      operationId: getallforemail
+      description: 'получить все объекты пользователя'
+      parameters:
+        - name: email
+          in: query
+          description: email to filter by
+          required: true
+          explode: true
+          schema:
+            type: string
+      requestBody: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreateData'
+          description: ''
+  /api/submitData/{Id}:
+    patch:
+      parameters:
+        - name: Id
+          in: path
+          description: ID of pereval
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateData'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDataResp'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDataResp'
+    get:
+      parameters:
+        - name: Id
+          in: path
+          description: ID of pereval
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDataResp'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDataResp'
+components:
+  schemas:
+    CreateDataResp:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 200
+        message:
+          type: string
+          maxLength: 64
+          example: "Error"
+        id:
+          type: integer
+    CreateData:
+      type: object
+      required:
+      - user
+      - title
+      - coords
+      properties:
+        beauty_title:
+          type: string
+          maxLength: 64
+          example: "пер. "
+        title:
+          type: string
+          maxLength: 64
+          example: "Пхия"
+        other_titles:
+          type: string
+          maxLength: 64
+          example: "Error"
+        connect:
+          type: string
+          maxLength: 64
+          example: "Error"
+        add_time:
+          type: string
+          maxLength: 64
+          example: "2021-09-22 13:18:13"
+        user:
+          type: object
+          properties:
+            email:
+              type: string
+              maxLength: 64
+              example: "qwerty@mail.ru"
+            fam:
+              type: string
+              maxLength: 64
+              example: "Иванов"
+            name:
+              type: string
+              maxLength: 64
+              example: "Иван"
+            otc:
+              type: string
+              maxLength: 64
+              example: "ибн Оглы"
+            phone:
+              type: string
+              maxLength: 64
+              example: "+7 555 55 55"
+            required:
+            - email
+        coords:
+          type: object
+          properties:
+            latitude:
+              type: float
+              example: 45.3842
+            longitude:
+              type: integer
+              example: 7.1525
+            height:
+              type: integer
+              example: 1200
+            required:
+            - latitude
+        level:
+          type: object
+          properties:
+            winter:
+              type: string
+              example: "1А"
+            summer:
+              type: string
+              example: "1А"
+            autumn:
+              type: string
+              example: "1А"
+            spring:
+              type: string
+              example: "1А"
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              data:
+                type: string
+              title:
+                type: string
+                example: "Седловина"
+
