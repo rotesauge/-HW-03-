@@ -14,8 +14,8 @@ POST /api/submitData/  Метод submitData принимает JSON в теле
                        пользователь\ 
   "user": {"email": "string", 		почта\
            "fam": "string",       фамилия\  
-		       "name": "string",      имя\
-		       "otc": "string",       отчество\
+	   "name": "string",      имя\
+	  "otc": "string",       отчество\
            "phone": "string"},    телефон\
    "coords":{                     координаты\
   "latitude": "float",            широта\
