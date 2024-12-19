@@ -55,9 +55,9 @@ POST /api/submitData/  Метод submitData принимает JSON в теле
   
   "spring": "string"},          уровень сложности весной
   
-
- 
-   "images": [{"data":"bytea",   - данные изображения 
+   "images": [
+   
+   		{"data":"bytea",   - данные изображения 
    
                title:"string"},  - описание
 	       
