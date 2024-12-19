@@ -1,6 +1,8 @@
 установка
   git clone https://github.com/rotesauge/-HW-03-
+  
   cd ./-HW-03-
+  
   make
 
 Методы
