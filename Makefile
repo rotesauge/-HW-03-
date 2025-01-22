@@ -3,7 +3,7 @@ current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 current_user = $(shell whoami)
 all:
 	python3 -m venv venv
-	source venv\bin\activate
+	source venv/bin/activate
 	python3 -m pip install --upgrade pip
 	pip install sqlalchemy
 	pip install fastapi
